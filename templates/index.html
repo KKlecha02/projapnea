@@ -13,13 +13,13 @@
 
   <div class="card">
     <h2>Analiza pliku</h2>
-    <form id="uploadForm" enctype="multipart/form-data">
+    <form id="uploadForm" method="POST" action="/analyze" enctype="multipart/form-data">
       <div class="upload-area" id="dropZone">
         <label class="upload-label" for="fileInput">
           Kliknij lub przeciągnij plik JSON tutaj
           <div class="file-name" id="fileName">Nie wybrano pliku</div>
         </label>
-        <input type="file" id="fileInput" name="file" accept=".json">
+        <input type="file" id="fileInput" name="file" accept=".json" required>
       </div>
       <div class="btn-row">
         <button type="submit" class="btn btn-primary" id="submitBtn">Analizuj</button>
@@ -98,40 +98,14 @@
     }
   });
 
-  form.addEventListener('submit', async e => {
-    e.preventDefault();
-    errorBox.style.display = 'none';
-
+  form.addEventListener('submit', e => {
     if (!fileInput.files[0]) {
+      e.preventDefault();
       showError('Wybierz plik JSON przed analizą.');
       return;
     }
-
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
     spinner.style.display = 'inline-block';
     submitBtn.disabled = true;
-
-    try {
-      const resp = await fetch('/analyze', {
-        method: 'POST',
-        body: formData,
-        headers: { 'Accept': 'text/html' },
-      });
-
-      const html = await resp.text();
-      document.open();
-      document.write(html);
-      document.close();
-      if (resp.ok || resp.redirected) {
-        window.history.pushState({}, '', '/analyze');
-      }
-    } catch (err) {
-      showError('Brak odpowiedzi serwera. Sprawdź połączenie.');
-    } finally {
-      spinner.style.display = 'none';
-      submitBtn.disabled = false;
-    }
   });
 
   function showError(msg) {
