@@ -6,7 +6,7 @@
   "baseline_window_seconds": 60,
   "merge_gap_seconds": 5,
   "ahi_thresholds": {"mild": 5, "moderate": 15, "severe": 30},
-  "api_timeout_seconds": 30,
+  "api_timeout_seconds": 180,
   "history_max_entries": 10,
   "results_dir": "results",
   "model_path": "model.pt",
