@@ -69,18 +69,22 @@ def save_result(result):
 
 
 def parse_payload(req):
-    if req.content_type and "multipart" in req.content_type:
+    ct = req.content_type or ""
+    if "multipart" in ct:
         file = req.files.get("file")
         if not file:
-            return None, "No file provided"
+            keys = list(req.files.keys())
+            return None, f"No file provided (received fields: {keys})"
         try:
             return json.load(file), None
         except json.JSONDecodeError as e:
             return None, f"Invalid JSON: {e}"
-    try:
-        return req.get_json(force=True), None
-    except Exception as e:
-        return None, f"Invalid JSON: {e}"
+    if not ct:
+        return None, f"Missing Content-Type header"
+    data = req.get_json(force=True, silent=True)
+    if data is None:
+        return None, f"Invalid JSON or unsupported Content-Type: {ct}"
+    return data, None
 
 
 @app.route("/", methods=["GET"])

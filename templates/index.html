@@ -107,7 +107,8 @@
       return;
     }
 
-    const formData = new FormData(form);
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
     spinner.style.display = 'inline-block';
     submitBtn.disabled = true;
 
@@ -118,15 +119,21 @@
         headers: { 'Accept': 'text/html' },
       });
 
-      if (resp.redirected || resp.ok) {
-        const html = await resp.text();
+      const html = await resp.text();
+      if (resp.ok || resp.redirected) {
         document.open();
         document.write(html);
         document.close();
         window.history.pushState({}, '', '/analyze');
       } else {
-        const data = await resp.json().catch(() => null);
-        showError(data?.error || `Błąd serwera: ${resp.status}`);
+        // try to extract error from server HTML response
+        const match = html.match(/showError\((.*?)\);/);
+        if (match) {
+          try { showError(JSON.parse(match[1])); } catch { showError(`Błąd serwera: ${resp.status}`); }
+        } else {
+          const data = (() => { try { return JSON.parse(html); } catch { return null; } })();
+          showError(data?.error || `Błąd serwera: ${resp.status}`);
+        }
       }
     } catch (err) {
       showError('Brak odpowiedzi serwera. Sprawdź połączenie.');
