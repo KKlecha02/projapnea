@@ -20,8 +20,8 @@ Następnie otwórz http://127.0.0.1:5000 w przeglądarce.
 Dane pacjentów powinny być w folderze ../Data/ względem katalogu projektu. Ścieżki można zmienić w config.json.
 
 Podział danych:
-- Trening: pacjenci 01-24
-- Walidacja: pacjenci 25-30 i 50
+- Trening: pacjenci 01-40
+- Walidacja: pacjenci 41-50
 
 ## Walidacja modelu
 
@@ -42,7 +42,7 @@ Wymaga PyTorch. Zapisuje wytrenowany model do model.pt.
 ## Struktura projektu
 
     src/
-      apnea.py          - algorytm detekcji (reguły)
+      apnea.py          - algorytm detekcji
       apnea_engine.py   - model CNN-LSTM
       app.py            - serwer Flask
     tests/
@@ -66,36 +66,3 @@ Wymaga PyTorch. Zapisuje wytrenowany model do model.pt.
     config.json
     wsgi.py
     requirements.txt
-
-## Deploy na PythonAnywhere
-
-1. Załóż konto na pythonanywhere.com
-
-2. Otwórz konsolę Bash i wklej:
-
-        git clone <url-repozytorium>
-        cd apnea-app
-
-3. Utwórz wirtualne środowisko:
-
-        mkvirtualenv apnea --python=python3.10
-        pip install -r requirements.txt
-
-4. W zakładce Web kliknij "Add a new web app", wybierz Manual configuration i Python 3.10
-
-5. W sekcji Code ustaw:
-   - Source code: /home/<username>/apnea-app
-   - Working directory: /home/<username>/apnea-app
-   - W pliku WSGI zastąp zawartość tym:
-
-          import sys
-          sys.path.insert(0, '/home/<username>/apnea-app')
-          from src.app import app as application
-
-6. W sekcji Virtualenv wpisz: /home/<username>/.virtualenvs/apnea
-
-7. Utwórz folder na wyniki:
-
-        mkdir ~/apnea-app/results
-
-8. Kliknij Reload i wejdź na <username>.pythonanywhere.com
