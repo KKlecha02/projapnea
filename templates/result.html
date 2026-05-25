@@ -54,7 +54,7 @@
   const EVENTS = {{ events_json | safe }};
 
   try {
-    Chart.register(ChartAnnotation);
+    Chart.register(window["chartjs-plugin-annotation"]);
 
     const annotations = {};
     EVENTS.forEach((ev, i) => {
