@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apnea Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+  <h1>Apnea Detector</h1>
+  <p class="subtitle">Wgraj plik JSON z danymi SpO2, aby wykryć epizody apnei.</p>
+
+  <div class="card">
+    <h2>Analiza pliku</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <div class="upload-area" id="dropZone">
+        <label class="upload-label" for="fileInput">
+          Kliknij lub przeciągnij plik JSON tutaj
+          <div class="file-name" id="fileName">Nie wybrano pliku</div>
+        </label>
+        <input type="file" id="fileInput" name="file" accept=".json">
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary" id="submitBtn">Analizuj</button>
+        <div class="spinner" id="spinner"></div>
+      </div>
+    </form>
+    <div class="error-box" id="errorBox" style="display:none"></div>
+
+    <details>
+      <summary>Przykładowy format pliku wejściowego</summary>
+      <pre>{
+  "record_duration_hours": 8.0,
+  "spo2": [
+    {"timestamp": 0.0, "value": 98.0},
+    {"timestamp": 1.0, "value": 97.5},
+    {"timestamp": 2.0, "value": 97.0}
+  ]
+}</pre>
+    </details>
+  </div>
+
+  {% if history %}
+  <div class="card">
+    <h2>Historia analiz</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Data/czas</th>
+          <th>AHI</th>
+          <th>Nasilenie</th>
+          <th>Wynik</th>
+          <th>Epizody</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in history %}
+        <tr>
+          <td>{{ entry.timestamp[:4] }}-{{ entry.timestamp[4:6] }}-{{ entry.timestamp[6:8] }}
+              {{ entry.timestamp[9:11] }}:{{ entry.timestamp[11:13] }}:{{ entry.timestamp[13:15] }}</td>
+          <td>{{ entry.ahi }}</td>
+          <td><span class="badge badge-{{ entry.severity }}">{{ entry.severity }}</span></td>
+          <td>{{ entry.score }}</td>
+          <td>{{ entry.apnea_events }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const fileName = document.getElementById('fileName');
+  const form = document.getElementById('uploadForm');
+  const spinner = document.getElementById('spinner');
+  const submitBtn = document.getElementById('submitBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  fileInput.addEventListener('change', () => {
+    fileName.textContent = fileInput.files[0]?.name || 'Nie wybrano pliku';
+  });
+
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = '#3b82f6'; });
+  dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = ''; });
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.style.borderColor = '';
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      fileInput.files = dt.files;
+      fileName.textContent = file.name;
+    }
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    errorBox.style.display = 'none';
+
+    if (!fileInput.files[0]) {
+      showError('Wybierz plik JSON przed analizą.');
+      return;
+    }
+
+    const formData = new FormData(form);
+    spinner.style.display = 'inline-block';
+    submitBtn.disabled = true;
+
+    try {
+      const resp = await fetch('/analyze', {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'text/html' },
+      });
+
+      if (resp.redirected || resp.ok) {
+        const html = await resp.text();
+        document.open();
+        document.write(html);
+        document.close();
+        window.history.pushState({}, '', '/analyze');
+      } else {
+        const data = await resp.json().catch(() => null);
+        showError(data?.error || `Błąd serwera: ${resp.status}`);
+      }
+    } catch (err) {
+      showError('Brak odpowiedzi serwera. Sprawdź połączenie.');
+    } finally {
+      spinner.style.display = 'none';
+      submitBtn.disabled = false;
+    }
+  });
+
+  function showError(msg) {
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+  }
+
+  {% if error %}
+  showError({{ error | tojson }});
+  {% endif %}
+</script>
+</body>
+</html>

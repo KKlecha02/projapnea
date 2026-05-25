@@ -1,0 +1,22 @@
+{
+  "min_spo2_drop_percent": 1.5,
+  "min_spo2_absolute": 90,
+  "min_duration_seconds": 8,
+  "median_filter_points": 5,
+  "baseline_window_seconds": 60,
+  "merge_gap_seconds": 5,
+  "ahi_thresholds": {"mild": 5, "moderate": 15, "severe": 30},
+  "api_timeout_seconds": 30,
+  "history_max_entries": 10,
+  "results_dir": "results",
+  "model_path": "model.pt",
+  "data_path_train": "../Data",
+  "data_path_val": "../Data",
+  "train_patients": ["01","02","03","04","05","06","07","08","09","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40"],
+  "val_patients": ["41","42","43","44","45","46","47","48","49","50"],
+  "window_size_seconds": 60,
+  "batch_size": 32,
+  "epochs": 25,
+  "learning_rate": 0.001,
+  "event_margin_seconds": 30
+}

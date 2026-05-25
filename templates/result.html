@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wyniki analizy — Apnea Detector</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+  <h1>Wyniki analizy</h1>
+
+  <div class="result-grid">
+    <div class="stat-card">
+      <div class="stat-value">{{ result.ahi }}</div>
+      <div class="stat-label">AHI (zd./h)</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">
+        <span class="badge badge-{{ result.severity }}">{{ result.severity }}</span>
+      </div>
+      <div class="stat-label">Nasilenie</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ result.apnea_events }}</div>
+      <div class="stat-label">Epizody</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">{{ result.score }}</div>
+      <div class="stat-label">Wynik (0–100)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Wykres SpO2</h2>
+    <div class="chart-container">
+      <canvas id="spo2Chart"></canvas>
+    </div>
+    <div class="error-box" id="chartError" style="display:none">
+      Nie udało się załadować wykresu.
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <a href="/" class="btn btn-primary">Analizuj kolejny</a>
+    <a href="/" class="btn btn-secondary">Wróć</a>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script>
+  const SPO2 = {{ spo2_json | safe }};
+  const EVENTS = {{ events_json | safe }};
+
+  try {
+    Chart.register(ChartAnnotation);
+
+    const annotations = {};
+    EVENTS.forEach((ev, i) => {
+      annotations['box' + i] = {
+        type: 'box',
+        xMin: ev.start_time,
+        xMax: ev.end_time,
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderColor: 'rgba(239, 68, 68, 0.5)',
+        borderWidth: 1,
+      };
+    });
+
+    new Chart(document.getElementById('spo2Chart'), {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: 'SpO2 (%)',
+          data: SPO2,
+          borderColor: '#3b82f6',
+          borderWidth: 1,
+          pointRadius: 0,
+          tension: 0,
+        }],
+      },
+      options: {
+        animation: false,
+        parsing: { xAxisKey: 'x', yAxisKey: 'y' },
+        scales: {
+          x: {
+            type: 'linear',
+            title: { display: true, text: 'Czas (s)' },
+          },
+          y: {
+            min: 70,
+            max: 100,
+            title: { display: true, text: 'SpO2 (%)' },
+          },
+        },
+        plugins: {
+          annotation: { annotations },
+          legend: { display: false },
+        },
+        responsive: true,
+        maintainAspectRatio: false,
+      },
+    });
+  } catch (e) {
+    document.getElementById('chartError').style.display = 'block';
+    console.error('Chart error:', e);
+  }
+</script>
+</body>
+</html>
