@@ -120,20 +120,11 @@
       });
 
       const html = await resp.text();
+      document.open();
+      document.write(html);
+      document.close();
       if (resp.ok || resp.redirected) {
-        document.open();
-        document.write(html);
-        document.close();
         window.history.pushState({}, '', '/analyze');
-      } else {
-        // try to extract error from server HTML response
-        const match = html.match(/showError\((.*?)\);/);
-        if (match) {
-          try { showError(JSON.parse(match[1])); } catch { showError(`Błąd serwera: ${resp.status}`); }
-        } else {
-          const data = (() => { try { return JSON.parse(html); } catch { return null; } })();
-          showError(data?.error || `Błąd serwera: ${resp.status}`);
-        }
       }
     } catch (err) {
       showError('Brak odpowiedzi serwera. Sprawdź połączenie.');
